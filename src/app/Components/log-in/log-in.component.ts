@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
 export class LogInComponent {
     handleLoginWithGoogle = () => {
     const popup = window.open(
-      "https://localhost:44341/api/NewGoogle/login/google?returnUrl=http://localhost:4200/auth/callback",
+      "https://localhost:44341/api/Google/login/google?returnUrl=http://localhost:4200/auth/callback",
       "googleAuth",
       "width=500,height=600,scrollbars=yes,resizable=yes"
     );

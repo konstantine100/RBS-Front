@@ -1,0 +1,198 @@
+<!-- layout.component.html -->
+<div class="layout-container">
+  <!-- Header -->
+  <div class="layout-header">
+    <h2>Restaurant Layout - Space {{ spaceId }}</h2>
+    
+    <!-- Connection Status -->
+    <div class="connection-status">
+      <span class="status-indicator" [ngClass]="{
+        'connected': isConnected,
+        'disconnected': !isConnected,
+        'connecting': connectionState === HubConnectionState.Reconnecting
+      }"></span>
+      <span class="status-text">
+        {{ isConnected ? 'Connected' : 'Disconnected' }}
+      </span>
+      <button 
+        *ngIf="!isConnected && !isLoading" 
+        (click)="reconnect()" 
+        class="reconnect-btn">
+        Reconnect
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-message">
+    <i class="error-icon">⚠️</i>
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <span>Loading layout...</span>
+  </div>
+
+  <!-- Controls -->
+  <div class="layout-controls" *ngIf="!isLoading">
+    <!-- Filter Controls -->
+    <div class="filter-section">
+      <label for="status-filter">Filter by Status:</label>
+      <select 
+        id="status-filter" 
+        [value]="selectedFilter" 
+        (change)="onFilterChange($event)"
+        class="filter-select">
+        <option value="all">All ({{ currentLayout.length }})</option>
+        <option 
+          *ngFor="let status of getUniqueStatuses()" 
+          [value]="status">
+          {{ status }} ({{ getStatusCount(status) }})
+        </option>
+      </select>
+    </div>
+
+    <!-- View Mode Controls -->
+    <div class="view-mode-section">
+      <button 
+        [class.active]="viewMode === 'grid'"
+        (click)="onViewModeChange('grid')"
+        class="view-btn">
+        Grid View
+      </button>
+      <button 
+        [class.active]="viewMode === 'list'"
+        (click)="onViewModeChange('list')"
+        class="view-btn">
+        List View
+      </button>
+    </div>
+  </div>
+
+  <!-- Layout Display -->
+  <div class="layout-content" *ngIf="!isLoading">
+    <!-- Grid View -->
+    <div *ngIf="viewMode === 'grid'" class="grid-view">
+      <div 
+        *ngFor="let item of getFilteredLayout()" 
+        class="layout-item"
+        [style.border-left-color]="getStatusColor(item.status)">
+        
+        <div class="item-header">
+          <h4>{{ getItemTitle(item) }}</h4>
+          <span 
+            class="status-badge"
+            [style.background-color]="getStatusColor(item.status)">
+            {{ item.status }}
+          </span>
+        </div>
+
+        <div class="item-details">
+          <div *ngIf="item.bookingId" class="detail-row">
+            <span class="detail-label">Booking ID:</span>
+            <span class="detail-value">{{ item.bookingId }}</span>
+          </div>
+          
+          <div *ngIf="item.reservationId" class="detail-row">
+            <span class="detail-label">Reservation ID:</span>
+            <span class="detail-value">{{ item.reservationId }}</span>
+          </div>
+          
+          <div *ngIf="item.walkInId" class="detail-row">
+            <span class="detail-label">Walk-in ID:</span>
+            <span class="detail-value">{{ item.walkInId }}</span>
+          </div>
+
+          <div *ngIf="item.table" class="detail-row">
+            <span class="detail-label">Table Info:</span>
+            <span class="detail-value">
+              Seats: {{ item.table.tableSeats || 'N/A' }}, 
+              Price: ${{ item.table.tablePrice || 0 }}
+            </span>
+          </div>
+
+          <div *ngIf="item.chair" class="detail-row">
+            <span class="detail-label">Chair Info:</span>
+            <span class="detail-value">
+              Price: ${{ item.chair.chairPrice || 0 }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div *ngIf="viewMode === 'list'" class="list-view">
+      <table class="layout-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Type</th>
+            <th>Details</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of getFilteredLayout()" class="table-row">
+            <td class="item-name">{{ getItemTitle(item) }}</td>
+            <td>
+              <span 
+                class="status-badge small"
+                [style.background-color]="getStatusColor(item.status)">
+                {{ item.status }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="item.bookingId">Booking</span>
+              <span *ngIf="item.reservationId">Reservation</span>
+              <span *ngIf="item.walkInId">Walk-in</span>
+              <span *ngIf="!item.bookingId && !item.reservationId && !item.walkInId">Available</span>
+            </td>
+            <td class="item-details-cell">
+              <div *ngIf="item.table" class="table-info">
+                Seats: {{ item.table.tableSeats || 'N/A' }}, 
+                Price: ${{ item.table.tablePrice || 0 }}
+              </div>
+              <div *ngIf="item.chair" class="chair-info">
+                Price: ${{ item.chair.chairPrice || 0 }}
+              </div>
+            </td>
+            <td class="actions-cell">
+              <button class="action-btn view-btn" title="View Details">
+                👁️
+              </button>
+              <button class="action-btn edit-btn" title="Edit">
+                ✏️
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="getFilteredLayout().length === 0" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No items found</h3>
+      <p>There are no layout items matching your current filter.</p>
+    </div>
+  </div>
+
+  <!-- Status Legend -->
+  <div class="status-legend" *ngIf="!isLoading">
+    <h4>Status Legend:</h4>
+    <div class="legend-items">
+      <div 
+        *ngFor="let status of getUniqueStatuses()" 
+        class="legend-item">
+        <span 
+          class="legend-color"
+          [style.background-color]="getStatusColor(status)"></span>
+        <span class="legend-label">{{ status }}</span>
+      </div>
+    </div>
+  </div>
+</div>

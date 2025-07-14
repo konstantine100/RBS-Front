@@ -1,0 +1,26 @@
+
+<!-- Add this to your existing template -->
+<div class="layout-container">
+  <div class="layout-header">
+    <h2>Restaurant Layout - Space {{spaceId}}</h2>
+    <button (click)="refreshLayout()" class="refresh-btn">
+      Refresh Layout
+    </button>
+  </div>
+  
+  <div class="layout-content">
+    <!-- Display your layout data here -->
+    <div *ngFor="let item of layoutData" class="layout-item">
+      <p>Status: {{item.status}}</p>
+      <p>Space ID: {{item.spaceId}}</p>
+      <p>Table ID: {{item.tableId}}</p>
+      <p>Chair ID: {{item.chairId}}</p>
+      <!-- Add more fields based on your LayoutByHour structure -->
+    </div>
+    
+    <!-- If no layout data -->
+    <div *ngIf="layoutData.length === 0" class="no-data">
+      <p>No layout data available</p>
+    </div>
+  </div>
+</div>
